@@ -1,0 +1,55 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import io from 'socket.io-client';
+
+const App = () => {
+    const [tasks, setTasks] = useState([]);
+    const [task, setTask] = useState('');
+    const socket = io('http://localhost:5000');
+
+    useEffect(() => {
+        const fetchTasks = async () => {
+            const response = await axios.get('http://localhost:5000/api/tasks');
+            setTasks(response.data);
+        };
+
+        fetchTasks();
+
+        socket.on('taskAdded', (updatedTasks) => {
+            setTasks(updatedTasks);
+        });
+    }, []);
+
+    const handleAddTask = async () => {
+        try {
+            await axios.post('http://localhost:5000/api/tasks', { task });
+            setTask('');
+        } catch (error) {
+            console.error('Error adding task', error);
+        }
+    };
+
+    return (
+        <div>
+            <h1>Task Management</h1>
+            <div>
+                <input
+                    type="text"
+                    value={task}
+                    onChange={(e) => setTask(e.target.value)}
+                    placeholder="New task"
+                />
+                <button onClick={handleAddTask}>Add Task</button>
+            </div>
+            <div>
+                <ul>
+                    {tasks.map((task, index) => (
+                        <li key={index}>{task.task}</li>
+                    ))}
+                </ul>
+            </div>
+        </div>
+    );
+};
+
+export default App;
